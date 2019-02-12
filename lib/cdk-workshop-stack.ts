@@ -1,7 +1,6 @@
 import { App, Stack, StackProps } from '@aws-cdk/cdk';
 import { Code, Function, Runtime } from '@aws-cdk/aws-lambda';
 import { LambdaRestApi } from '@aws-cdk/aws-apigateway';
-import { TableViewer } from 'cdk-dynamo-table-viewer';
 
 import { HitCounter } from './hitcounter';
 
@@ -12,7 +11,7 @@ export class CdkWorkshopStack extends Stack {
     // defines an AWS Lambda resource
     const hello = new Function(this, 'HelloHandler', {
       runtime: Runtime.NodeJS810,
-      code: Code.asset('lambda'),
+      code: Code.asset('packages/lambda/lib'),
       handler: 'hello.handler'
     });
 
@@ -24,12 +23,6 @@ export class CdkWorkshopStack extends Stack {
     new LambdaRestApi(this, 'Endpoint', {
       handler: helloWithCounter.handler
     });
-
-    new TableViewer(this, 'ViewHitCounter', {
-      title: 'Hello Hits',
-      table: helloWithCounter.table,
-      sortBy: '-hits'
-    });
-
+    
   }
 }
