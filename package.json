@@ -12,11 +12,13 @@
   "devDependencies": {
     "@types/node": "^8.9.4",
     "typescript": "^3.1.2",
-    "aws-cdk": "^0.24.0"
+    "aws-cdk": "0.22.0"
   },
   "dependencies": {
-    "@aws-cdk/aws-sns": "^0.24.0",
-    "@aws-cdk/aws-sqs": "^0.24.0",
-    "@aws-cdk/cdk": "^0.24.0"
+    "@aws-cdk/aws-apigateway": "0.22",
+    "@aws-cdk/aws-dynamodb": "0.22",
+    "@aws-cdk/aws-lambda": "0.22",
+    "@aws-cdk/cdk": "0.22",
+    "cdk-dynamo-table-viewer": "0.1.12"
   }
 }

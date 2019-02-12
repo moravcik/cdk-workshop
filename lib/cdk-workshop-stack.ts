@@ -1,17 +1,35 @@
-import sns = require('@aws-cdk/aws-sns');
-import sqs = require('@aws-cdk/aws-sqs');
-import cdk = require('@aws-cdk/cdk');
+import { App, Stack, StackProps } from '@aws-cdk/cdk';
+import { Code, Function, Runtime } from '@aws-cdk/aws-lambda';
+import { LambdaRestApi } from '@aws-cdk/aws-apigateway';
+import { TableViewer } from 'cdk-dynamo-table-viewer';
 
-export class CdkWorkshopStack extends cdk.Stack {
-  constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
+import { HitCounter } from './hitcounter';
+
+export class CdkWorkshopStack extends Stack {
+  constructor(scope: App, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    const queue = new sqs.Queue(this, 'CdkWorkshopQueue', {
-      visibilityTimeoutSec: 300
+    // defines an AWS Lambda resource
+    const hello = new Function(this, 'HelloHandler', {
+      runtime: Runtime.NodeJS810,
+      code: Code.asset('lambda'),
+      handler: 'hello.handler'
     });
 
-    const topic = new sns.Topic(this, 'CdkWorkshopTopic');
+    const helloWithCounter = new HitCounter(this, 'HelloHitCounter', {
+      downstream: hello
+    });
 
-    topic.subscribeQueue(queue);
+    // defines an API Gateway REST API resource backed by out "hello" function
+    new LambdaRestApi(this, 'Endpoint', {
+      handler: helloWithCounter.handler
+    });
+
+    new TableViewer(this, 'ViewHitCounter', {
+      title: 'Hello Hits',
+      table: helloWithCounter.table,
+      sortBy: '-hits'
+    });
+
   }
 }
