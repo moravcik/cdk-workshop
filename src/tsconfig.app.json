@@ -20,7 +20,5 @@
       "node_modules/@types"
     ]
   },
-  "exclude": [
-    "lambda"
-  ]
+  "exclude": []
 }

@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "gsaapp": {
+    "cdkapp": {
       "root": "",
       "sourceRoot": "src",
       "projectType": "application",
@@ -62,11 +62,11 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "gsaapp:build"
+            "browserTarget": "cdkapp:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "gsaapp:build:production"
+              "browserTarget": "cdkapp:build:production"
             }
           }
         },
@@ -74,8 +74,7 @@
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
             "tsConfig": [
-              "src/tsconfig.app.json",
-              "src/tsconfig.spec.json"
+              "src/tsconfig.app.json"
             ],
             "exclude": [
               "**/node_modules/**"
@@ -85,5 +84,5 @@
       }
     }
   },
-  "defaultProject": "gsaapp"
+  "defaultProject": "cdkapp"
 }
