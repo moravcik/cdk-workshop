@@ -17,13 +17,13 @@
     "sourceMap": true,
     "experimentalDecorators": true,
     "strictPropertyInitialization":false,
-    "outDir": "lib"
+    "outDir": "dist/lambda"
   },
   "include": [
-    "src/**/*"
+    "lambda"
   ],
   "exclude": [
-    "lib",
-    "node_modules"
+    "node_modules",
+    "src"
   ]
 }

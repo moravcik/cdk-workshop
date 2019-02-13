@@ -24,7 +24,7 @@ export class HitCounter extends Construct {
     this.handler = new Function(this, 'HitCounterHandler', {
       runtime: Runtime.NodeJS810,
       handler: 'hitcounter.handler',
-      code: Code.asset('packages/lambda/lib'),
+      code: Code.asset('dist/lambda'),
       environment: {
         DOWNSTREAM_FUNCTION_NAME: props.downstream.functionName,
         HITS_TABLE_NAME: this.table.tableName

@@ -18,8 +18,11 @@
     "experimentalDecorators": true,
     "strictPropertyInitialization":false
   },
+  "include": [
+    "cdk"
+  ],
   "exclude": [
-    "packages",
-    "node_modules"
+    "node_modules",
+    "src"
   ]
 }
