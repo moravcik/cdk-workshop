@@ -10,7 +10,7 @@ export async function handler(event: APIGatewayEvent) {
 
   // update dynamo entry for "path" with hits++
   await dynamo.update({
-    TableName: process.env.HITS_TABLE_NAME,
+    TableName: process.env.HITS_TABLE_NAME as string,
     Key: { path: event.path },
     UpdateExpression: 'ADD hits :incr',
     ExpressionAttributeValues: { ':incr': 1 }
@@ -18,10 +18,10 @@ export async function handler(event: APIGatewayEvent) {
 
   // call downstream function and capture response
   const resp = await lambda.invoke({
-    FunctionName: process.env.DOWNSTREAM_FUNCTION_NAME,
+    FunctionName: process.env.DOWNSTREAM_FUNCTION_NAME as string,
     Payload: JSON.stringify(event)
   }).promise();
-
+  
   console.log('downstream response:', JSON.stringify(resp, null, 2));
 
   // return response back to upstream caller

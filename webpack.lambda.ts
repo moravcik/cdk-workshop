@@ -14,10 +14,6 @@ const config: webpack.Configuration = {
       res[entry] = './lambda/' + filename;
       return res;
     }, {} as any);
-    // {
-    //   "hello": './lambda/hello.ts',
-    //   "hitcounter": './lambda/hitcounter.ts'
-    // }
     return entries;
   },
   externals: ['aws-sdk'],
