@@ -15,10 +15,11 @@ import { simpleChange } from '../utils/simple-change.operator';
 import { PinPoint, Pin, SavedPin } from 'shared/types/pin.types';
 
 @Component({
-  selector: 'div[map]', // tslint:disable-line
-  encapsulation: ViewEncapsulation.None,
-  styleUrls: ['./map.component.scss'],
-  template: ''
+    selector: 'div[map]', // tslint:disable-line
+    encapsulation: ViewEncapsulation.None,
+    styleUrls: ['./map.component.scss'],
+    template: '',
+    standalone: false
 })
 export class MapComponent implements OnInit, OnChanges, OnDestroy {
 

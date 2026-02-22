@@ -1,4 +1,5 @@
-import * as S3 from 'aws-sdk/clients/s3';
+import { S3Client, PutObjectCommand, DeleteObjectsCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { createWriteStream } from 'fs';
 
 import { Image, SavedImage, SavedPin } from '../../shared/types/pin.types';
@@ -8,12 +9,14 @@ const imageBucket = process.env.IMAGE_BUCKET as string;
 const region = process.env.AWS_REGION;
 const localEndpoint = process.env.S3_ENDPOINT as any;
 
-const s3 = new S3(localEndpoint && {
-  accessKeyId: 'S3RVER',
-  secretAccessKey: 'S3RVER',
+const s3 = new S3Client(localEndpoint ? {
+  credentials: {
+    accessKeyId: 'S3RVER',
+    secretAccessKey: 'S3RVER'
+  },
   region: 'local',
   endpoint: localEndpoint
-});
+} : {});
 
 export async function saveImageToS3(s3key: string, unsavedImage: Image & { dataBuffer?: Buffer }): Promise<SavedImage> {
   const { dataUrl, dataBuffer, ...imageFields } = unsavedImage;
@@ -21,15 +24,15 @@ export async function saveImageToS3(s3key: string, unsavedImage: Image & { dataB
 
   console.log(`Saving image to S3: ${s3key}`);
 
-  await s3.putObject({
+  await s3.send(new PutObjectCommand({
     Bucket: imageBucket,
     Key: s3key,
     ContentType: unsavedImage.type,
+    ACL: isPublic ? 'public-read' : undefined,
     Body: dataUrl
       ? dataUrlToBuffer(dataUrl as string, unsavedImage.type)
-      : dataBuffer,
-    ACL: isPublic ? 'public-read' : undefined
-  }).promise();
+      : dataBuffer
+  }));
 
   const url = isPublic ? getPublicUrl(s3key) : undefined;
   return { ...imageFields, s3key, url };
@@ -38,31 +41,31 @@ export async function saveImageToS3(s3key: string, unsavedImage: Image & { dataB
 export async function deleteImageFromS3(pin: SavedPin) {
   if (pin.image) {
     console.log('Deleting pin image from S3: ', pin.image.s3key);
-    await s3.deleteObjects({
+    await s3.send(new DeleteObjectsCommand({
       Bucket: imageBucket,
       Delete: { Objects: [{ Key: pin.image.s3key }] }
-    }).promise();
+    }));
   }
   if (pin.thumbnail) {
     console.log('Deleting pin thumbnail from S3: ', pin.thumbnail.s3key);
-    await s3.deleteObjects({
+    await s3.send(new DeleteObjectsCommand({
       Bucket: imageBucket,
       Delete: { Objects: [{ Key: pin.thumbnail.s3key }] }
-    }).promise();
+    }));
   }
 }
 
-export function resolveSignedUrl(pin: SavedPin): SavedPin {
+export async function resolveSignedUrl(pin: SavedPin): Promise<SavedPin> {
   const { image, ...pinFields } = pin;
   if (image) {
-    const url = getDownloadUrl(image.s3key, image.name);
+    const url = await getDownloadUrl(image.s3key, image.name);
     return { ...pinFields, image: { ...image, url }};
   }
   return pin;
 }
 
 export function copyFromS3(Bucket: string, Key: string, filePath: string): Promise<void> {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const tempFileStream = createWriteStream(filePath);
     tempFileStream.on('close', () => {
       console.log('Saved to:', filePath);
@@ -72,7 +75,8 @@ export function copyFromS3(Bucket: string, Key: string, filePath: string): Promi
       console.log('Saving failed:', err);
       reject();
     });
-    s3.getObject({ Bucket, Key }).createReadStream().pipe(tempFileStream);
+    const response = await s3.send(new GetObjectCommand({ Bucket, Key }));
+    (response.Body as any).pipe(tempFileStream);
   });
 }
 
@@ -92,11 +96,10 @@ function getPublicUrl(s3key: string): string {
 
 function getDownloadUrl(s3key: string, name: string) {
   return localEndpoint
-    ? `${localEndpoint}/${imageBucket}/${s3key}`
-    : s3.getSignedUrl('getObject', {
+    ? Promise.resolve(`${localEndpoint}/${imageBucket}/${s3key}`)
+    : getSignedUrl(s3, new GetObjectCommand({
       Bucket: imageBucket,
-      Expires: 12 * 3600,
       Key: s3key,
       ResponseContentDisposition: `attachment; filename="${name}"`
-    })
+    }), { expiresIn: 12 * 3600 });
 }

@@ -6,8 +6,8 @@ import { PinState } from '../state/pin.state';
 import { Pin } from 'shared/types/pin.types';
 
 @Component({
-  selector: 'app-root',
-  styles: [`
+    selector: 'app-root',
+    styles: [`
       :host {
           height: 100vh;
           display: flex;
@@ -36,18 +36,21 @@ import { Pin } from 'shared/types/pin.types';
           .sidebar { flex: 1 0 auto; }
       }
   `],
-  template: `
+    template: `
       <div class="header">
-          <app-header [pin]="selectedPin$ | async"></app-header>
+        <app-header [pin]="selectedPin$ | async"></app-header>
       </div>
       <div class="main">
-          <div class="fixed">
-              <div map [pin]="selectedPin$ | async"></div>
+        <div class="fixed">
+          <div map [pin]="selectedPin$ | async"></div>
+        </div>
+        @if (selectedPin$ | async) {
+          <div class="sidebar">
+            <app-sidebar [pin]="selectedPin$ | async"></app-sidebar>
           </div>
-          <div class="sidebar" *ngIf="selectedPin$ | async">
-              <app-sidebar [pin]="selectedPin$ | async"></app-sidebar>
-          </div>
-      </div>`
+        }
+      </div>`,
+    standalone: false
 })
 export class AppComponent {
   

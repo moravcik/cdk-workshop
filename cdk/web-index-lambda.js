@@ -1,26 +1,27 @@
-const AWS = require('aws-sdk');
-const response = require('cfn-response');
+const { S3Client, GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3');
 
-const s3 = new AWS.S3();
+const s3 = new S3Client({});
 
-module.exports.handler = (event, context, callback) => {
+module.exports.handler = async (event, context) => {
   const { WebBucketName, ApiBaseUrl } = event.ResourceProperties;
 
-  switch (event.RequestType) {
-    case "Create":
-    case "Update":
-      patchIndexHtml().then(
-        () => send('SUCCESS', { Message: `Resource ${event.RequestType} successful!` }),
-        err => send('FAILED', { Error: '' + err })
-      );
-      break;
-    case "Delete":
-      send('SUCCESS', { Message: 'Resource Delete successful!' });
+  try {
+    switch (event.RequestType) {
+      case "Create":
+      case "Update":
+        await patchIndexHtml();
+        return { PhysicalResourceId: 'WebIndex' };
+      case "Delete":
+        return { PhysicalResourceId: event.PhysicalResourceId };
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    throw err;
   }
 
   async function patchIndexHtml() {
-    const data = await s3.getObject({ Bucket: WebBucketName, Key: 'index.html' }).promise();
-    const html = data.Body && data.Body.toString('utf-8');
+    const response = await s3.send(new GetObjectCommand({ Bucket: WebBucketName, Key: 'index.html' }));
+    const html = await streamToString(response.Body);
 
     if (!html) {
       throw Error('missing index.html');
@@ -31,17 +32,20 @@ module.exports.handler = (event, context, callback) => {
 
       console.log('Updated index.html:', replacedHtml);
 
-      return s3.putObject({
+      return s3.send(new PutObjectCommand({
         Bucket: WebBucketName,
         Key: 'index.html',
         Body: replacedHtml,
         ContentType: 'text/html; charset=UTF-8'
-      }).promise();
+      }));
     }
   }
 
-  function send(responseStatus, responseData) {
-    console.log(`Sending response ${responseStatus}`);
-    response.send(event, context, responseStatus, responseData);
+  async function streamToString(stream) {
+    const chunks = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks).toString('utf-8');
   }
 };

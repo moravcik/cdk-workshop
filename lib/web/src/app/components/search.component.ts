@@ -9,7 +9,7 @@ import {
   SimpleChanges,
   ViewChild
 } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { Observable, of } from 'rxjs';
 import { debounceTime, map, startWith, switchMap } from 'rxjs/operators';
@@ -20,8 +20,8 @@ import { Pin } from 'shared/types/pin.types';
 
 
 @Component({
-  selector: 'app-search',
-  styles: [`
+    selector: 'app-search',
+    styles: [`
       mat-form-field {
           width: 100%;
       }
@@ -29,31 +29,38 @@ import { Pin } from 'shared/types/pin.types';
           display: none;
       }
   `],
-  template: `
+    template: `
       <!-- Search input -->
       <mat-form-field>
-          <input matInput #searchInput
-                 [matAutocomplete]="auto"
-                 [formControl]="searchControl"
-                 (focus)="searchActiveChange.emit(true)"
-                 placeholder="Click into the map or search here">
-          <button mat-icon-button matSuffix *ngIf="!searchActive">
-              <mat-icon>search</mat-icon>
+        <input matInput #searchInput
+          [matAutocomplete]="auto"
+          [formControl]="searchControl"
+          (focus)="searchActiveChange.emit(true)"
+          placeholder="Click into the map or search here">
+        @if (!searchActive) {
+          <button mat-icon-button matSuffix>
+            <mat-icon>search</mat-icon>
           </button>
-          <button mat-icon-button matSuffix *ngIf="searchControl.value" (click)="clearSearch()">
-              <mat-icon>close</mat-icon>
+        }
+        @if (searchControl.value) {
+          <button mat-icon-button matSuffix (click)="clearSearch()">
+            <mat-icon>close</mat-icon>
           </button>
+        }
       </mat-form-field>
       <!-- Search results -->
       <mat-autocomplete #auto>
-          <ng-container *ngIf="searchInput.value">
-              <mat-option *ngFor="let pin of (geocodedPins$ | async) | slice:0:5" [value]="pin"
-                          (onSelectionChange)="selectPin(pin)">
-                  {{ pin.address?.display_name }}
-              </mat-option>
-          </ng-container>
+        @if (searchInput.value) {
+          @for (pin of (geocodedPins$ | async) | slice:0:5; track pin) {
+            <mat-option [value]="pin"
+              (onSelectionChange)="selectPin(pin)">
+              {{ pin.address?.display_name }}
+            </mat-option>
+          }
+        }
       </mat-autocomplete>
-  `
+      `,
+    standalone: false
 })
 export class SearchComponent implements OnInit, OnChanges {
   
@@ -65,7 +72,7 @@ export class SearchComponent implements OnInit, OnChanges {
   @ViewChild('searchInput', { static: true })
   searchInput: ElementRef;
   
-  searchControl = new FormControl();
+  searchControl = new UntypedFormControl();
   geocodedPins$: Observable<Pin[]>;
   
   constructor(private nominatim: NominatimService, private store: Store) {}

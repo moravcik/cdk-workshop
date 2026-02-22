@@ -1,15 +1,16 @@
 import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { Observable, Subscription } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 
 import { Image } from 'shared/types/pin.types';
 
 @Component({
-  selector: 'app-image-input',
-  template: `
+    selector: 'app-image-input',
+    template: `
       <input #fileInput type="file" accept="image/*" style="display:none;" [formControl]="inputControl"/>
-  `
+  `,
+    standalone: false
 })
 export class ImageInputComponent implements OnInit, OnDestroy {
   
@@ -19,7 +20,7 @@ export class ImageInputComponent implements OnInit, OnDestroy {
   @ViewChild('fileInput', { static: true })
   input: ElementRef;
   
-  inputControl = new FormControl();
+  inputControl = new UntypedFormControl();
   
   subscription: Subscription;
   

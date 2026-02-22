@@ -5,11 +5,11 @@ import { scan } from 'rxjs/operators';
 export function simpleChange() {
   return (source: Observable<any>): Observable<SimpleChange> => {
     return source.pipe(
-      scan((lastChange: SimpleChange, val) => ({
-        currentValue: val,
-        previousValue: lastChange.currentValue,
-        firstValue: !lastChange.currentValue
-      }), {})
+      scan((lastChange: any, val) => new SimpleChange(
+        lastChange?.currentValue,
+        val,
+        !lastChange?.currentValue
+      ), null)
     ) as Observable<SimpleChange>;
   }
 }

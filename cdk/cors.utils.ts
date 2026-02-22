@@ -1,4 +1,4 @@
-import { IResource, MockIntegration, PassthroughBehavior } from '@aws-cdk/aws-apigateway';
+import { IResource, MockIntegration, PassthroughBehavior } from 'aws-cdk-lib/aws-apigateway';
 
 export function addCorsOptions(apiResource: IResource, ...customHeaders: string[]) {
   apiResource.addMethod('OPTIONS', new MockIntegration({

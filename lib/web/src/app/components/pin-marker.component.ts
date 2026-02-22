@@ -9,9 +9,10 @@ import { PinFromMap, PinState } from '../state/pin.state';
 import { Pin, SavedImage, SavedPin } from 'shared/types/pin.types';
 
 @Component({
-  selector: 'app-pin-marker',
-  styleUrls: ['./pin-marker.component.scss'],
-  templateUrl: './pin-marker.component.html'
+    selector: 'app-pin-marker',
+    styleUrls: ['./pin-marker.component.scss'],
+    templateUrl: './pin-marker.component.html',
+    standalone: false
 })
 export class PinMarkerComponent implements OnInit, OnDestroy, AfterViewInit {
 

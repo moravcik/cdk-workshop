@@ -7,8 +7,8 @@ import { PinPoint, SavedPin, Image } from 'shared/types/pin.types';
 import { toDMS } from 'shared/utils/point.utils';
 
 @Component({
-  selector: 'app-sidebar',
-  styles: [`
+    selector: 'app-sidebar',
+    styles: [`
       .close {
           position: absolute !important;
           top: 0px;
@@ -18,40 +18,51 @@ import { toDMS } from 'shared/utils/point.utils';
           margin-top: 16px;
       }
   `],
-  template: `
+    template: `
       <mat-card>
-          <mat-card-title>
-              {{ printPoint(pin.point) }}
-              <button class="close" mat-icon-button (click)="unselectPin()">
-                  <mat-icon>close</mat-icon>
-              </button>
-          </mat-card-title>
-          <mat-card-subtitle>
-              {{ pin.address?.display_name || pin.address?.error }}
-          </mat-card-subtitle>
-          <div style="display:flex">
-              <button mat-raised-button *ngIf="!unsavedImage && !pin.image" color="primary" (click)="selectImage()">
-                  Pin Image
-              </button>
-              <mat-progress-bar *ngIf="unsavedImage" mode="indeterminate" color="accent"></mat-progress-bar>
-              <a mat-button *ngIf="pin.image?.url" color="primary" [href]="pin.image.url" target="_blank">
-                  Download Image
-              </a>
-              <button mat-button *ngIf="!unsavedImage && pin.pointUrl" color="warn" (click)="deletePin()">
-                  Delete Pin
-              </button>
-          </div>
-          <div class="image">
-              <ng-container *ngIf="!pin.image">
-                  <app-image-input [unsavedImage]="unsavedImage"
-                                   (unsavedImageChange)="savePinWithImage($event)">
-                  </app-image-input>
-                  <app-image [image]="unsavedImage"></app-image>
-              </ng-container>
-              <app-image *ngIf="pin.image" [image]="pin.image"></app-image>
-          </div>
+        <mat-card-title>
+          {{ printPoint(pin.point) }}
+          <button class="close" mat-icon-button (click)="unselectPin()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </mat-card-title>
+        <mat-card-subtitle>
+          {{ pin.address?.display_name || pin.address?.error }}
+        </mat-card-subtitle>
+        <div style="display:flex">
+          @if (!unsavedImage && !pin.image) {
+            <button mat-raised-button color="primary" (click)="selectImage()">
+              Pin Image
+            </button>
+          }
+          @if (unsavedImage) {
+            <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
+          }
+          @if (pin.image?.url) {
+            <a mat-button color="primary" [href]="pin.image.url" target="_blank">
+              Download Image
+            </a>
+          }
+          @if (!unsavedImage && pin.pointUrl) {
+            <button mat-button color="warn" (click)="deletePin()">
+              Delete Pin
+            </button>
+          }
+        </div>
+        <div class="image">
+          @if (!pin.image) {
+            <app-image-input [unsavedImage]="unsavedImage"
+              (unsavedImageChange)="savePinWithImage($event)">
+            </app-image-input>
+            <app-image [image]="unsavedImage"></app-image>
+          }
+          @if (pin.image) {
+            <app-image [image]="pin.image"></app-image>
+          }
+        </div>
       </mat-card>
-  `
+      `,
+    standalone: false
 })
 export class SidebarComponent implements OnChanges {
 

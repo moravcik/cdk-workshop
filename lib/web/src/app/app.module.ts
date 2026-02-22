@@ -1,4 +1,4 @@
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
@@ -12,7 +12,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { BrowserModule, Meta } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgxsModule } from '@ngxs/store';
-import { NgxFilesizeModule } from 'ngx-filesize';
 
 import { AppComponent } from './components/app.component';
 import { HeaderComponent } from './components/header.component';
@@ -29,43 +28,36 @@ import { environment } from '../environments/environment';
 import { PinApiService } from './services/pin-api.service';
 
 
-@NgModule({
-  declarations: [
-    AppComponent,
-    HeaderComponent,
-    ImageComponent,
-    ImageInputComponent,
-    MapComponent,
-    PinMarkerComponent,
-    SearchComponent,
-    SidebarComponent
-  ],
-  imports: [
-    BrowserModule,
-    BrowserAnimationsModule,
-    FormsModule,
-    ReactiveFormsModule,
-    HttpClientModule,
-    MatAutocompleteModule,
-    MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatProgressBarModule,
-    MatProgressSpinnerModule,
-    NgxFilesizeModule,
-    NgxsModule.forRoot([PinState], {
-      developmentMode: !environment.production
-    })
-  ],
-  providers: [
-    NominatimService,
-    PinApiService,
-    { provide: Config, useFactory: configFactory, deps: [Meta] }
-  ],
-  bootstrap: [AppComponent]
-})
+@NgModule({ declarations: [
+        AppComponent,
+        HeaderComponent,
+        ImageComponent,
+        ImageInputComponent,
+        MapComponent,
+        PinMarkerComponent,
+        SearchComponent,
+        SidebarComponent
+    ],
+    bootstrap: [AppComponent], imports: [BrowserModule,
+        BrowserAnimationsModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MatAutocompleteModule,
+        MatButtonModule,
+        MatCardModule,
+        MatFormFieldModule,
+        MatIconModule,
+        MatInputModule,
+        MatProgressBarModule,
+        MatProgressSpinnerModule,
+        NgxsModule.forRoot([PinState], {
+            developmentMode: !environment.production
+        })], providers: [
+        NominatimService,
+        PinApiService,
+        { provide: Config, useFactory: configFactory, deps: [Meta] },
+        provideHttpClient(withInterceptorsFromDi())
+    ] })
 export class AppModule {
 
 }

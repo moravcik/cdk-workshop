@@ -1,9 +1,10 @@
-import { CustomResource, CustomResourceProvider } from '@aws-cdk/aws-cloudformation';
-import { Role } from '@aws-cdk/aws-iam';
-import { Code, Runtime, SingletonFunction } from '@aws-cdk/aws-lambda';
-import { IBucket } from '@aws-cdk/aws-s3';
-import { ISource } from '@aws-cdk/aws-s3-deployment';
-import { Construct, Duration } from '@aws-cdk/core';
+import { CustomResource, custom_resources } from 'aws-cdk-lib';
+import { Role } from 'aws-cdk-lib/aws-iam';
+import { Code, Runtime, SingletonFunction } from 'aws-cdk-lib/aws-lambda';
+import { IBucket } from 'aws-cdk-lib/aws-s3';
+import { ISource } from 'aws-cdk-lib/aws-s3-deployment';
+import { Duration } from 'aws-cdk-lib';
+import { Construct } from 'constructs';
 import { path as rootPath } from 'app-root-path';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
@@ -24,7 +25,7 @@ export class WebIndex extends Construct {
     const handler = new SingletonFunction(this, 'WebIndexLambda', {
       uuid: '4c84aa14-4077-11e9-bd73-47fe778e69cb',
       code: Code.fromInline(handlerCode),
-      runtime: Runtime.NODEJS_10_X,
+      runtime: Runtime.NODEJS_LATEST,
       handler: 'index.handler',
       lambdaPurpose: 'Custom::CDKWebIndex',
       timeout: Duration.seconds(30)
@@ -34,13 +35,17 @@ export class WebIndex extends Construct {
 
     const { zipObjectKey } = props.source.bind(this, { handlerRole: handler.role as Role });
 
+    const provider = new custom_resources.Provider(this, 'WebIndexProvider', {
+      onEventHandler: handler
+    });
+
     new CustomResource(this, 'CustomResource', {
-      provider: CustomResourceProvider.lambda(handler),
+      serviceToken: provider.serviceToken,
       resourceType: 'Custom::CDKWebIndex',
       properties: {
         ApiBaseUrl: props.apiBaseUrl,
         WebBucketName: props.bucket.bucketName,
-        zipObjectKey // force run on update dist/web
+        zipObjectKey
       }
     });
 

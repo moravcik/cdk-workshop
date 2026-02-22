@@ -3,8 +3,8 @@ import { Component, HostListener, Input, OnInit } from '@angular/core';
 import { Pin } from 'shared/types/pin.types';
 
 @Component({
-  selector: 'app-header',
-  styles: [`
+    selector: 'app-header',
+    styles: [`
       :host {
           height: 48px;
           display: flex;
@@ -25,20 +25,25 @@ import { Pin } from 'shared/types/pin.types';
           padding: 24px 16px 0px 16px;
       }
   `],
-  template: `
-      <ng-container *ngIf="isDesktop || !searchActive">
-          <a href="https://solargis.com" target="_blank">
-              <img src="assets/solargis.svg">
-          </a>
-          <div class="title">CDK FULLSTACK WORKSHOP</div>
-      </ng-container>
-      <button mat-button *ngIf="!isDesktop" (click)="searchActive = true">
+    template: `
+      @if (isDesktop || !searchActive) {
+        <a href="https://solargis.com" target="_blank">
+          <img src="assets/solargis.svg">
+        </a>
+        <div class="title">CDK FULLSTACK WORKSHOP</div>
+      }
+      @if (!isDesktop) {
+        <button mat-button (click)="searchActive = true">
           <mat-icon>search</mat-icon>
-      </button>
-      <div class="search" *ngIf="isDesktop || searchActive">
+        </button>
+      }
+      @if (isDesktop || searchActive) {
+        <div class="search">
           <app-search [pin]="pin" [(searchActive)]="searchActive"></app-search>
-      </div>
-  `
+        </div>
+      }
+      `,
+    standalone: false
 })
 export class HeaderComponent implements OnInit {
 

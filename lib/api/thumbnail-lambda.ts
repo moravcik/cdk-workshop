@@ -1,23 +1,19 @@
-import { Callback, Context, S3CreateEvent } from 'aws-lambda';
-import { DynamoDB } from 'aws-sdk';
-import * as del from 'del';
+import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { Context, S3CreateEvent } from 'aws-lambda';
+import { unlinkSync } from 'fs';
 import { join, parse } from 'path';
-import * as sharp from 'sharp';
+import sharp from 'sharp';
 import { v4 } from 'uuid';
 
+import { dynamo } from "./utils/dynamo.utils";
 import { copyFromS3, saveImageToS3 } from './utils/s3.utils';
 import { SavedImage } from '../shared/types/pin.types';
 
 const pinTable = process.env.PIN_TABLE as string;
 const tempDir = process.env.TEMP_DIR || '/tmp';
 
-const dynamo = new DynamoDB.DocumentClient({
-  endpoint: process.env.DYNAMODB_ENDPOINT
-});
-
-export function handler(event: S3CreateEvent, context: Context, callback: Callback) {
-
-  Promise.all(
+export function handler(event: S3CreateEvent, context: Context): Promise<any> {
+  return Promise.all(
     event.Records.map(async record => {
       const { bucket: { name: Bucket }, object: { key, size } } = record.s3;
       const Key = decodeURIComponent(key);
@@ -52,7 +48,7 @@ export function handler(event: S3CreateEvent, context: Context, callback: Callba
 
         const thumbnail = await saveImageToS3(s3key, unsavedThumbnail);
 
-        await del(tempImage, { force: true });
+        unlinkSync(tempImage);
         console.log('Deleted temp image:', tempImage);
 
         await updatePinThumbnail(pointUrl, thumbnail);
@@ -60,24 +56,21 @@ export function handler(event: S3CreateEvent, context: Context, callback: Callba
 
       } catch (err) {
         console.error('Error resizing image', Key, err);
-        await updatePinThumbnail(pointUrl, { error: err } as any);
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        await updatePinThumbnail(pointUrl, { error: errorMessage } as any);
         throw err;
       }
     })
-  ).then(
-    () => callback && callback(null, 'done'),
-    err => callback && callback(err)
   );
 }
 
 async function updatePinThumbnail(pointUrl: string, thumbnail: SavedImage) {
   console.log('Updating thumbnail image:', pointUrl, thumbnail);
-  await dynamo.update({
+  await dynamo.send(new UpdateCommand({
     TableName: pinTable,
     Key: { pointUrl },
     UpdateExpression: 'SET #thumbnail = :thumbnail',
     ExpressionAttributeNames: { '#thumbnail': 'thumbnail' },
     ExpressionAttributeValues: { ':thumbnail': thumbnail }
-  }).promise();
-
+  }));
 }

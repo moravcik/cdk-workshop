@@ -1,17 +1,14 @@
+import { PutCommand, ScanCommand, GetCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { APIGatewayProxyEvent, Context } from 'aws-lambda';
-import { DynamoDB } from 'aws-sdk';
 import { parse } from 'path';
 import { v4 } from 'uuid';
 
+import { dynamo } from "./utils/dynamo.utils";
 import { deleteImageFromS3, resolveSignedUrl, saveImageToS3 } from './utils/s3.utils';
 import { SavedImage, SavedPin, Pin } from '../shared/types/pin.types';
 import { pointToUrl } from '../shared/utils/point.utils';
 
 const pinTable = process.env.PIN_TABLE as string;
-
-const dynamo = new DynamoDB.DocumentClient({
-  endpoint: process.env.DYNAMODB_ENDPOINT
-});
 
 export async function handler(event: APIGatewayProxyEvent, context: Context) {
   context.callbackWaitsForEmptyEventLoop = false;
@@ -61,17 +58,18 @@ async function handleSave(event: APIGatewayProxyEvent, sourceIp: string) {
   const savedPin = { pointUrl, point, sourceIp, created, ...pinFields, image: savedImage } as SavedPin;
 
   console.log('Saving pin record', savedPin);
-  await dynamo.put({ TableName: pinTable, Item: savedPin }).promise();
+  await dynamo.send(new PutCommand({ TableName: pinTable, Item: savedPin }));
 
-  const savedPinWithUrl = resolveSignedUrl(savedPin);
+  const savedPinWithUrl = await resolveSignedUrl(savedPin);
   return transformResult({ body: savedPinWithUrl });
 }
 
 // GET:/pin
 async function handleList() {
-  const result = await dynamo.scan({ TableName: pinTable }).promise();
+  const result = await dynamo.send(new ScanCommand({ TableName: pinTable }));
   const pinRecords = result.Items as SavedPin[];
-  return transformResult({ body: pinRecords.map(pin => resolveSignedUrl(pin)) });
+  const pinsWithUrls = await Promise.all(pinRecords.map(pin => resolveSignedUrl(pin)));
+  return transformResult({ body: pinsWithUrls });
 }
 
 // GET:/pin/{pointUrl}
@@ -80,7 +78,8 @@ async function handleGet(pointUrl: string) {
   if (!pinRecord) {
     return transformResult({ statusCode: 404 });
   }
-  return transformResult({ body: resolveSignedUrl(pinRecord) })
+  const pinWithUrl = await resolveSignedUrl(pinRecord);
+  return transformResult({ body: pinWithUrl });
 }
 
 // DELETE:/pin/{pointUrl}
@@ -91,8 +90,7 @@ async function handleDelete(pointUrl: string) {
   await deleteImageFromS3(pinRecord);
 
   console.log('Deleting pin record: ', pointUrl);
-  await dynamo.delete({ TableName: pinTable, Key: { pointUrl }})
-    .promise();
+  await dynamo.send(new DeleteCommand({ TableName: pinTable, Key: { pointUrl } }));
 
   return transformResult({ statusCode: 204 });
 }
@@ -109,6 +107,6 @@ function transformResult({ statusCode = 200, body = ''}: { statusCode?: number, 
 }
 
 async function getPinRecord(pointUrl: string): Promise<SavedPin> {
-  const result = await dynamo.get({ TableName: pinTable, Key: { pointUrl } }).promise();
+  const result = await dynamo.send(new GetCommand({ TableName: pinTable, Key: { pointUrl } }));
   return result && result.Item as SavedPin;
 }
