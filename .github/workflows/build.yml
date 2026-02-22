@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [12.x, 14.x, 16.x]
+        node-version: [20.x, 22.x, 24.x]
 
     steps:
     - uses: actions/checkout@v2
@@ -54,20 +54,20 @@ jobs:
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
-          node-version: 14.x
+          node-version: 20.x
 
       - name: Cache NPM packages
         uses: actions/cache@v2
         with:
           path: ./node_modules
-          key: ${{ runner.os }}-node_modules-14.x-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-node_modules-20.x-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node_modules-14.x-
+            ${{ runner.os }}-node_modules-20.x-
 
       - name: Download dist
         uses: actions/download-artifact@v2
         with:
-          name: dist-14.x
+          name: dist-20.x
           path: dist
 
       - name: Configure AWS Credentials
@@ -81,9 +81,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ./cdk.out
-          key: ${{ runner.os }}-cdk-14.x-${{ hashFiles('**/dist', '**/cdk') }}
+          key: ${{ runner.os }}-cdk-20.x-${{ hashFiles('**/dist', '**/cdk') }}
           restore-keys: |
-            ${{ runner.os }}-cdk-14.x-
+            ${{ runner.os }}-cdk-20.x-
 
       - name: CDK Deploy
         run: npx cdk deploy
